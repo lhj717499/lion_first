@@ -25,3 +25,9 @@ frontend/out/
 
 # Gradle Configuration
 gradle*
+!backend/gradlew
+!backend/gradlew.bat
+!backend/gradle/
+!backend/gradle/wrapper/
+!backend/gradle/wrapper/gradle-wrapper.jar
+!backend/gradle/wrapper/gradle-wrapper.properties
