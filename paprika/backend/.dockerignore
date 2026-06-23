@@ -1,0 +1,9 @@
+.gradle/
+build/
+bin/
+out/
+*.class
+
+.env
+.env.local
+.env.*.local
