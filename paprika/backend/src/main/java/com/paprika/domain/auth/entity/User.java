@@ -69,4 +69,6 @@ public class User {
 
     public enum Role { USER, ADMIN }
     public enum Provider { LOCAL, GOOGLE, NAVER, GITHUB }
+
+    
 }
