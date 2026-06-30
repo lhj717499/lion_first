@@ -12,6 +12,7 @@
  *  - '관심' 버튼 → 찜 추가/제거 (E - 장인호)
  */
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import type { Product } from '@/types';
 import styles from './page.module.css';
 
@@ -101,9 +102,9 @@ export default function ProductDetailPage({
             <button className={styles.secondaryButton} type="button">
               채팅하기
             </button>
-            <button className={styles.primaryButton} type="button">
+            <Link className={styles.primaryButton} href={`/transactions?postId=${params.id}`}>
               거래하기
-            </button>
+            </Link>
           </div>
         </div>
       </section>

@@ -94,12 +94,28 @@ public class TransactionService {
     //findTransaction은 없으면 예외를 던지는 헬퍼
     public TransactionResponse getTransaction(Long transactionId) {
         Transaction transaction = findTransaction(transactionId);
+        return toResponse(transaction);
+    }
+
+    /** 내(구매자) 진행 중 거래 목록 조회: 화면 새로고침·재방문 시에도 표시하기 위함 */
+    public List<TransactionResponse> getMyTransactions() {
+        return transactionRepository
+                .findByBuyerIdAndStatusInOrderByCreatedAtDesc(
+                        DEMO_BUYER_ID,
+                        List.of(TransactionStatus.PENDING, TransactionStatus.AGREED))
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    /** 거래 공통 정보에 방식별 상세를 합쳐 응답 DTO로 변환 */
+    private TransactionResponse toResponse(Transaction transaction) {
         DirectTransaction direct = null;
         DeliveryTransaction delivery = null;
         if (transaction.getType() == TransactionType.DIRECT) {
-            direct = directTransactionRepository.findById(transactionId).orElse(null);
+            direct = directTransactionRepository.findById(transaction.getId()).orElse(null);
         } else {
-            delivery = deliveryTransactionRepository.findById(transactionId).orElse(null);
+            delivery = deliveryTransactionRepository.findById(transaction.getId()).orElse(null);
         }
         return TransactionResponse.of(transaction, direct, delivery);
     }

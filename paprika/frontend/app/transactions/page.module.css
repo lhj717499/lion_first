@@ -21,10 +21,21 @@
   background: var(--color-surface-container);
 }
 
+.productInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .productTitle {
   font-size: 16px;
   font-weight: 700;
   color: var(--color-on-surface);
+}
+
+.productSeller {
+  font-size: 13px;
+  color: var(--color-on-surface-variant);
 }
 
 .productPrice {

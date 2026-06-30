@@ -1,8 +1,8 @@
 'use client';
 
 import { Suspense, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
+import type { ApiResponse } from '@/types';
 import styles from './page.module.css';
 
 type TransactionType = 'DIRECT' | 'DELIVERY';
@@ -11,6 +11,15 @@ const TYPE_LABEL: Record<TransactionType, string> = {
   DIRECT: '직거래',
   DELIVERY: '배달',
 };
+
+// 백엔드 GET /api/v1/transactions/{id} 응답 (TransactionResponse 일부)
+interface TransactionResponse {
+  id: number;
+  type: TransactionType;
+  status: string;
+  meetingLocation?: string;
+  meetingTime?: string;
+}
 
 interface TransactionItem {
   id: number;
@@ -24,29 +33,36 @@ interface TransactionItem {
 }
 
 function TransactionStatusContent() {
-  const searchParams = useSearchParams();
+  const [items, setItems] = useState<TransactionItem[]>([]);
+  const [loadError, setLoadError] = useState(false);
 
-  // TODO: 실제 거래 데이터 연동 전까지 약속 확정으로 넘어온 거래만 표시
-  const [items, setItems] = useState<TransactionItem[]>(() => {
-    const meetingLocation = searchParams.get('location') ?? '';
-    const meetingTime = searchParams.get('time') ?? '';
-    const type: TransactionType = searchParams.get('type') === 'DELIVERY' ? 'DELIVERY' : 'DIRECT';
-    if (!meetingLocation && !meetingTime) {
-      return [];
-    }
-    return [
-      {
-        //각 거래를 구분할 고유 식별자
-        id: Date.now(),
-        type,
-        meetingLocation,
-        meetingTime,
-        buyerConfirmed: false,// 구매확정했는지 
-        sellerConfirmed: false,
-        completed: false,
-      },
-    ];
-  });
+  // 페이지 진입(재방문 포함) 시 내 진행 중 거래 목록을 DB에서 조회해 표시
+  useEffect(() => {
+    let active = true;
+    api
+      .get<ApiResponse<TransactionResponse[]>>('/api/v1/transactions')
+      .then((response) => {
+        if (!active) return;
+        const list = response.data.data ?? [];
+        setItems(
+          list.map((tx) => ({
+            id: tx.id,
+            type: tx.type,
+            meetingLocation: tx.meetingLocation ?? '',
+            meetingTime: tx.meetingTime ? tx.meetingTime.replace('T', ' ') : '',
+            buyerConfirmed: false,
+            sellerConfirmed: false,
+            completed: tx.status === 'COMPLETED',
+          })),
+        );
+      })
+      .catch(() => {
+        if (active) setLoadError(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // 완료 요청을 거래당 한 번만 보내기 위한 기록 (중복 호출 방지)
   const completeRequested = useRef<Set<number>>(new Set());
@@ -86,11 +102,16 @@ function TransactionStatusContent() {
     );
   };
 
-  const handleCancel = (id: number) => {
+  const handleCancel = async (id: number) => {
     if (!confirm('거래를 취소하시겠어요?')) {
       return;
     }
-    //확인을 누른 뒤 실행되는 취소처리 로직
+    //확인을 누른 뒤 실제 거래를 취소(CANCELLED) 처리 요청
+    try {
+      await api.patch(`/api/v1/transactions/${id}/status`, { status: 'CANCELLED' });
+    } catch {
+      // 백엔드 오류 시에도 데모 흐름은 계속 진행
+    }
     completeRequested.current.delete(id);
     setItems((prev) => prev.filter((item) => item.id !== id));
   };
@@ -100,7 +121,9 @@ function TransactionStatusContent() {
       <div className={styles.container}>
         <h1 className={styles.title}>거래 상태</h1>
 
-        {items.length === 0 ? (
+        {loadError ? (
+          <p className={styles.empty}>거래 정보를 불러오지 못했습니다.</p>
+        ) : items.length === 0 ? (
           <p className={styles.empty}>진행 중인 거래가 없습니다.</p>
         ) : (
           <ul className={styles.list}>

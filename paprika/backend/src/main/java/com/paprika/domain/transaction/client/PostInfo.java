@@ -12,7 +12,6 @@ public record PostInfo(
         Long postId,
         String title,
         BigDecimal price,
-        Long sellerId,
-        String status
+        Long sellerId
 ) {
 }

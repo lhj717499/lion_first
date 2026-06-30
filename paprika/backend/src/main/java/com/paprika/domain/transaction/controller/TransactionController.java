@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 거래 컨트롤러
  * 담당: D - 이동준
@@ -39,10 +41,16 @@ public class TransactionController {
         return ResponseEntity.ok(ApiResponse.ok("거래가 생성되었습니다.", response));
     }
 
-    // 거래 화면 표시용 상품(post) 정보 조회 (현재는 PostQueryClientStub의 더미 데이터)
+    // 거래 화면 표시용 상품(post) 정보 조회 (PostQueryClientJdbc로 posts 테이블 조회)
     @GetMapping("/post-info/{postId}")
     public ResponseEntity<ApiResponse<PostInfo>> getPostInfo(@PathVariable Long postId) {
         return ResponseEntity.ok(ApiResponse.ok(postQueryClient.getPostInfo(postId)));
+    }
+
+    // 내(구매자) 진행 중 거래 목록 조회 (상태 페이지 재방문 시에도 표시)
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<TransactionResponse>>> getMyTransactions() {
+        return ResponseEntity.ok(ApiResponse.ok(transactionService.getMyTransactions()));
     }
 
     //거래 상세 조회

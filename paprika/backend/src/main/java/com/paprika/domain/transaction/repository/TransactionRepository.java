@@ -15,6 +15,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findBySellerIdOrderByCreatedAtDesc(Long sellerId);
 
+    /** 내 거래 목록(진행 중 등 특정 상태만) 조회: 최신순 */
+    List<Transaction> findByBuyerIdAndStatusInOrderByCreatedAtDesc(
+            Long buyerId, List<TransactionStatus> statuses);
+
     /** 중복 거래 방지: 동일 게시글(상품)에 진행 중(취소/완료 아님)인 거래가 있는지 확인 */
     boolean existsByPostIdAndStatusIn(Long postId, List<TransactionStatus> statuses);
 }
