@@ -1,7 +1,6 @@
 package com.paprika.domain.post.entity;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -20,19 +20,21 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "post_price_history")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PostPriceHistory {
-
+public class PostPriceHistory extends BaseTimeEntity {
+    /* --- 1. Column Define --- */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
-    private Long postId;
-
+    private Post post;
     @Column(nullable = false)
     private BigDecimal price;
 
-    @Column(nullable = false)
-    private OffsetDateTime editedAt = OffsetDateTime.now();
+    /* --- 2. Builder --- */
+    @Builder
+    public PostPriceHistory(Post post, BigDecimal price) {
+        this.post = post;
+        this.price = price;
+    }
 }

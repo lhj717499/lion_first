@@ -1,14 +1,10 @@
 package com.paprika.domain.post.entity;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.List;
-
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
@@ -37,8 +33,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "posts")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
-public class Post {
+public class Post extends BaseTimeEntity {
     /* --- 1. Column Define --- */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -64,18 +59,8 @@ public class Post {
     private double longitude;
     @Column(nullable = false)
     private BigDecimal currentPrice;
-    /**
-     * TimeZone 고려한 OffsetDateTime 사용
-     */
-    @Column
-    private OffsetDateTime created_at = OffsetDateTime.now();
-    @Column
-    private OffsetDateTime editedAt;
-    /**
-     * enable -> is_active 로 컬럼명 변경
-     */
     @Column(nullable = false)
-    private boolean is_active = true;
+    private boolean active = true;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PostCategory category;
@@ -90,7 +75,7 @@ public class Post {
 
     /* --- 1.1. For Post entity Enum Type --- */
     public enum PostCategory {
-        ELECTRONICS, FASHION, HOME, KIDS, BOOKS, SPORTS, HOBBIES, OTHER
+        ELECTRONICS, FASHION, HOME, KIDS, BOOKS, SPORTS, HOBBIES, OTHERS
     }
 
     public enum PostStatus {

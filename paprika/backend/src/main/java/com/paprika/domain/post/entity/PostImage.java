@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -20,38 +21,42 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostImage {
-
+    /* --- 1. Column Define --- */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
-    private Post postId;
-
+    private Post post;
     @Column
     private String imgUrl;
-
     /**
-     * enable -> isActive 로 변경
-     * 사용자 요청에서 image 가 delete 되면 isActive = false
+     * enable -> Active 로 변경
+     * 사용자 요청에서 image 가 delete 되면 active = false
      * 이후, 배치 작업에서
-     * 1) isActive = false 인 데이터에 대해 delete_scheduled_at 데이터 update
+     * 1) active = false 인 데이터에 대해 delete_scheduled_at 데이터 update
      * 2) delete_scheduled_at 에 대해 overdue 인 것에 대해 삭제
      */
     @Column(nullable = false)
-    private boolean isActive = true;
-
+    private boolean active = true;
     @Column
     private OffsetDateTime deleteScheduledAt;
 
+    /* --- 2. Builder --- */
+    @Builder
+    private PostImage(Post post, String imgUrl) {
+        this.post = post;
+        this.imgUrl = imgUrl;
+    }
+
+    /* --- 3. Entity Method --- */
     /**
      * 삭제 예정일 : 현재 + 7일
      * 
      * @param scheduledAt
      */
     public void softDelete() {
-        this.isActive = false;
+        this.active = false;
         this.deleteScheduledAt = OffsetDateTime.now().plusDays(7);
     }
 }
