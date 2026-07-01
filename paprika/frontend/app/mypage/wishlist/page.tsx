@@ -2,16 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
-
-interface WishItem {
-  id: number;
-  productId: number;
-  imgUrl: string;
-  createdAt: string;
-}
+import { WishListItem } from '@/types';
+import styles from '../page.module.css';
 
 export default function WishlistPage() {
-  const [items, setItems] = useState<WishItem[]>([]);
+  const [items, setItems] = useState<WishListItem[]>([]);
 
   useEffect(() => {
     api.get('/api/v1/users/me/wishlist')
@@ -21,19 +16,17 @@ export default function WishlistPage() {
 
   return (
     <section>
-      <h1 style={{ marginBottom: 24 }}>관심 상품</h1>
+      <h1 className={styles.title}>관심 상품</h1>
 
       {items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--color-on-surface-variant)' }}>
-          찜한 상품이 없습니다.
-        </div>
+        <div className={styles.empty}>찜한 상품이 없습니다.</div>
       ) : (
-        <div style={{ display: 'grid', gap: 12 }}>
+        <div className={styles.list}>
           {items.map((item) => (
-            <div key={item.id} style={{ padding: 16, borderRadius: 12, background: 'var(--color-surface-container-lowest)', display: 'flex', gap: 16, alignItems: 'center', boxShadow: 'var(--shadow-card)' }}>
-              <img src={item.imgUrl} alt="상품" style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 600, marginBottom: 4 }}>상품 #{item.productId}</p>
+            <div key={item.id} className={styles.card}>
+              <img src={item.imgUrl} alt="상품" className={styles.cardImg} />
+              <div className={styles.cardInfo}>
+                <p className={styles.cardTitle}>상품 #{item.productId}</p>
               </div>
               <button
                 onClick={() => {
@@ -41,7 +34,7 @@ export default function WishlistPage() {
                     .then(() => setItems(prev => prev.filter(i => i.id !== item.id)))
                     .catch(console.error);
                 }}
-                style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #eee', cursor: 'pointer', color: '#e53935', background: 'transparent' }}
+                className={styles.wishBtn}
               >
                 찜 해제
               </button>

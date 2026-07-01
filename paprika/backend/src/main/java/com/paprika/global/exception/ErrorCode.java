@@ -29,6 +29,10 @@ public enum ErrorCode {
     TRANSACTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "거래에 대한 권한이 없습니다."),
     INVALID_TRANSACTION_STATUS(HttpStatus.BAD_REQUEST, "유효하지 않은 거래 상태입니다."),
 
+    // Review (E - 장인호)
+    REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 리뷰를 작성했습니다."),
+    INVALID_RATING(HttpStatus.BAD_REQUEST, "유효하지 않은 별점입니다."),
+
     // Common
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "잘못된 입력값입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");

@@ -2,18 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
-
-interface Transaction {
-  id: number;
-  postId: number;
-  type: string;
-  status: string;
-  myRole: string;
-  itemPrice: number;
-  amount: number;
-  createdAt: string;
-  imgUrl: string;
-}
+import { MyPageTransaction } from '@/types';
+import styles from '../page.module.css';
 
 const statusLabels: Record<string, string> = {
   PENDING: '거래 요청',
@@ -21,7 +11,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function SellingPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<MyPageTransaction[]>([]);
 
   useEffect(() => {
     api.get('/api/v1/users/me/transactions?tab=selling')
@@ -31,26 +21,22 @@ export default function SellingPage() {
 
   return (
     <section>
-      <h1 style={{ marginBottom: 24 }}>판매중</h1>
+      <h1 className={styles.title}>판매중</h1>
 
       {transactions.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--color-on-surface-variant)' }}>
-          현재 판매 중인 상품이 없습니다.
-        </div>
+        <div className={styles.empty}>현재 판매 중인 상품이 없습니다.</div>
       ) : (
-        <div style={{ display: 'grid', gap: 12 }}>
+        <div className={styles.list}>
           {transactions.map((t) => (
-            <div key={t.id} style={{ padding: 16, borderRadius: 12, background: 'var(--color-surface-container-lowest)', display: 'flex', gap: 16, alignItems: 'center', boxShadow: 'var(--shadow-card)' }}>
-              <img src={t.imgUrl} alt="상품" style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 600, marginBottom: 4 }}>상품 #{t.postId}</p>
-                <p style={{ fontSize: 13, color: 'var(--color-on-surface-variant)' }}>
-                  {t.type === 'DIRECT' ? '직거래' : '택배'}
-                </p>
+            <div key={t.id} className={styles.card}>
+              <img src={t.imgUrl} alt="상품" className={styles.cardImg} />
+              <div className={styles.cardInfo}>
+                <p className={styles.cardTitle}>상품 #{t.postId}</p>
+                <p className={styles.cardType}>{t.type === 'DIRECT' ? '직거래' : '택배'}</p>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ fontWeight: 700, marginBottom: 4 }}>{t.amount.toLocaleString()}원</p>
-                <p style={{ fontSize: 13, color: 'var(--color-secondary)' }}>{statusLabels[t.status]}</p>
+              <div className={styles.cardRight}>
+                <p className={styles.cardPrice}>{t.amount.toLocaleString()}원</p>
+                <p className={styles.cardStatus}>{statusLabels[t.status]}</p>
               </div>
             </div>
           ))}

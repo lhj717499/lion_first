@@ -105,15 +105,43 @@ export interface PostInfo {
   status: ProductStatus;
 }
 
+// MyPage (E - 장인호)
+export interface MyPageTransaction {
+  id: number;
+  postId: number;
+  type: string;
+  status: string;
+  myRole: 'BUYER' | 'SELLER';
+  itemPrice: number;
+  amount: number;
+  createdAt: string;
+  imgUrl: string;
+}
+// Wishlist
+export interface WishListItem {
+  id: number;
+  productId: number;
+  imgUrl: string;
+  createdAt: string;
+}
+
 // Review (E - 장인호)
 export interface Review {
   id: number;
   transactionId: number;
   reviewerId: number;
-  reviewerNickname: string;
+  reviewerNickname: string | null;
+  rating: 1 | 2 | 3 | 4 | 5;
   content: string;
-  mannerScore: -1 | 0 | 1;
+  mannerScore: -2 | -1 | 0 | 1 | 2;
   createdAt: string;
+}
+// Mannertemperature
+export interface MannerTemperature {
+  userId: number;
+  temperature: number;
+  trustGrade: '나쁨' | '약간나쁨' | '보통' | '좋음' | '최고';
+  reviewCount: number;
 }
 
 // Common

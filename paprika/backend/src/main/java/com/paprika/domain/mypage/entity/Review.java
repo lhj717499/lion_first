@@ -36,8 +36,22 @@ public class Review {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    private Integer rating; 
+
     private Integer mannerScore; // -1 (비매너), 0 (보통), +1 (매너)
 
     @CreatedDate
     private LocalDateTime createdAt;
+
+    public static Review of(Long transactionId, Long reviewerId, Long revieweeId,
+                             Integer rating, Integer mannerScore, String content) {
+        Review r = new Review();
+        r.transactionId = transactionId;
+        r.reviewerId = reviewerId;
+        r.revieweeId = revieweeId;
+        r.rating = rating;
+        r.mannerScore = mannerScore;
+        r.content = content;
+        return r;
+    }
 }

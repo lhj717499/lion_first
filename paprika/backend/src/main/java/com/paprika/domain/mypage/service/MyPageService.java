@@ -104,7 +104,7 @@ public class MyPageService {
                         String imgUrl = myPagePostImageRepository
                                 .findFirstByPostIdAndActiveTrue(t.getPostId())
                                 .map(MyPagePostImage::getImgUrl)
-                                .orElse("https://picsum.photos/seed/post" + t.getPostId() + "/80/80");//상품사진이 없을떄 기본이미지 나중에변경
+                                .orElse("https://picsum.photos/seed/post" + t.getPostId() + "/320/320");//상품사진이 없을떄 기본이미지 나중에변경
                         return TransactionSummaryResponse.from(t, "BUYER", imgUrl);
                     })
                     .collect(Collectors.toList());
@@ -117,7 +117,7 @@ public class MyPageService {
                         String imgUrl = myPagePostImageRepository
                                 .findFirstByPostIdAndActiveTrue(t.getPostId())
                                 .map(MyPagePostImage::getImgUrl)
-                                .orElse("https://picsum.photos/seed/post" + t.getPostId() + "/80/80");//상품사진이 없을떄 기본이미지 나중에변경
+                                .orElse("https://picsum.photos/seed/post" + t.getPostId() + "/320/320");//상품사진이 없을떄 기본이미지 나중에변경
                         return TransactionSummaryResponse.from(t, "SELLER", imgUrl);
                     })
                     .collect(Collectors.toList());
@@ -131,7 +131,7 @@ public class MyPageService {
                         String imgUrl = myPagePostImageRepository
                                 .findFirstByPostIdAndActiveTrue(t.getPostId())
                                 .map(MyPagePostImage::getImgUrl)
-                                .orElse("https://picsum.photos/seed/post" + t.getPostId() + "/80/80");//상품사진이 없을떄 기본이미지 나중에변경
+                                .orElse("https://picsum.photos/seed/post" + t.getPostId() + "/320/320");//상품사진이 없을떄 기본이미지 나중에변경
                         return TransactionSummaryResponse.from(t, "SELLER", imgUrl);
                     })
                     .collect(Collectors.toList());
@@ -143,7 +143,7 @@ public class MyPageService {
                             String imgUrl = myPagePostImageRepository
                                     .findFirstByPostIdAndActiveTrue(t.getPostId())
                                     .map(MyPagePostImage::getImgUrl)
-                                    .orElse("https://picsum.photos/seed/post" + t.getPostId() + "/80/80");//상품사진이 없을떄 기본이미지 나중에변경
+                                    .orElse("https://picsum.photos/seed/post" + t.getPostId() + "/320/320");//상품사진이 없을떄 기본이미지 나중에변경
                             all.add(TransactionSummaryResponse.from(t, "BUYER", imgUrl));
                         });
                 transactionRepository.findBySellerIdOrderByCreatedAtDesc(userId)
@@ -151,7 +151,7 @@ public class MyPageService {
                             String imgUrl = myPagePostImageRepository
                                     .findFirstByPostIdAndActiveTrue(t.getPostId())
                                     .map(MyPagePostImage::getImgUrl)
-                                    .orElse("https://picsum.photos/seed/post" + t.getPostId() + "/80/80");//상품사진이 없을떄 기본이미지 나중에변경
+                                    .orElse("https://picsum.photos/seed/post" + t.getPostId() + "/320/320");//상품사진이 없을떄 기본이미지 나중에변경
                             all.add(TransactionSummaryResponse.from(t, "SELLER", imgUrl));
                         });
                 all.sort(Comparator.comparing(TransactionSummaryResponse::getCreatedAt).reversed());
@@ -167,7 +167,7 @@ public class MyPageService {
                     String imgUrl = myPagePostImageRepository
                             .findFirstByPostIdAndActiveTrue(w.getProductId())
                             .map(MyPagePostImage::getImgUrl)
-                            .orElse("https://picsum.photos/seed/product" + w.getProductId() + "/80/80");//상품사진이 없을떄 기본이미지 나중에변경
+                            .orElse("https://picsum.photos/seed/product" + w.getProductId() + "/320/320");//상품사진이 없을떄 기본이미지 나중에변경
                     return WishListResponse.from(w, imgUrl);
                 })
                 .collect(Collectors.toList());
