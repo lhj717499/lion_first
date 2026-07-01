@@ -13,6 +13,8 @@ import com.paprika.domain.transaction.entity.Transaction.TransactionType;
 import com.paprika.domain.transaction.repository.DeliveryTransactionRepository;
 import com.paprika.domain.transaction.repository.DirectTransactionRepository;
 import com.paprika.domain.transaction.repository.TransactionRepository;
+import com.paprika.global.exception.ErrorCode;
+import com.paprika.global.exception.PaprikaException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -94,12 +96,15 @@ public class TransactionService {
         return toResponse(transaction);
     }
 
-    /** 내 진행 중 거래 목록 조회(구매자/판매자 모두): 화면 새로고침·재방문 시에도 표시하기 위함 */
+    /** 내 거래 목록 조회(구매자/판매자 모두): 진행 중 + 완료 건까지 표시 (취소 제외) */
     public List<TransactionResponse> getMyTransactions(Long userId) {
         return transactionRepository
                 .findMyTransactions(
                         userId,
-                        List.of(TransactionStatus.PENDING, TransactionStatus.AGREED))
+                        List.of(
+                                TransactionStatus.PENDING,
+                                TransactionStatus.AGREED,
+                                TransactionStatus.COMPLETED))
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -139,6 +144,25 @@ public class TransactionService {
         Transaction transaction = findTransaction(transactionId);
         transaction.cancel();
         postStatusClient.markSelling(transaction.getPostId());
+    }
+
+    /** 거래 내역 삭제: 완료(COMPLETED) 건만 구매자/판매자가 목록에서 제거 */
+    @Transactional
+    public void deleteTransaction(Long transactionId, Long userId) {
+        Transaction transaction = findTransaction(transactionId);
+        if (!transaction.getBuyerId().equals(userId) && !transaction.getSellerId().equals(userId)) {
+            throw new PaprikaException(ErrorCode.TRANSACTION_ACCESS_DENIED);
+        }
+        if (transaction.getStatus() != TransactionStatus.COMPLETED) {
+            throw new PaprikaException(ErrorCode.INVALID_TRANSACTION_STATUS);
+        }
+
+        if (transaction.getType() == TransactionType.DIRECT) {
+            directTransactionRepository.deleteById(transactionId);
+        } else {
+            deliveryTransactionRepository.deleteById(transactionId);
+        }
+        transactionRepository.delete(transaction);
     }
 
     private Transaction findTransaction(Long transactionId) {

@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './AddressAutocomplete.module.css';
 
+//우리가 가공한 데이터
 interface Suggestion {
   placeId: string;
   text: string;
   mainText: string;
   secondaryText: string;
 }
-
+//Google API가 주는 원본
 interface GooglePrediction {
   placeId?: string;
   text?: { text?: string };
@@ -123,6 +124,7 @@ export default function AddressAutocomplete({
         type="text"
         autoComplete="off"
         placeholder={placeholder}
+        //value : 입력한 주소
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onFocus={() => suggestions.length > 0 && setOpen(true)}

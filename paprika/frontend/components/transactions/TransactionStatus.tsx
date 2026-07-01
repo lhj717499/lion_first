@@ -28,6 +28,7 @@ interface TransactionItem {
   id: number;
   type: TransactionType;
   sellerId: number;
+  buyerId: number;
   meetingLocation: string;
   meetingTime: string;
   completed: boolean;
@@ -42,22 +43,39 @@ interface TransactionStatusProps {
  * 거래 상태 목록 (재사용 모듈)
  * 담당: D - 이동준
  *
- * 내(구매자/판매자) 진행 중 거래를 조회해 보여준다.
+ * 내(구매자/판매자) 거래를 조회해 보여준다. (진행 중 + 완료, 취소 제외)
  * - 판매확정: 해당 거래의 판매자에게만 노출 (완료 처리)
- * - 거래 취소: 구매자/판매자 모두 가능
+ * - 거래 취소: 구매자/판매자 모두 가능 (진행 중)
+ * - 내역 삭제: 완료된 거래만 목록에서 제거
  *
  * 라우트 페이지뿐 아니라 어디서든 <TransactionStatus /> 로 끼워 쓸 수 있다.
  */
 export default function TransactionStatus({ title = '거래 상태' }: TransactionStatusProps) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const currentUserId = user?.id ?? null;
 
   const [items, setItems] = useState<TransactionItem[]>([]);
   const [loadError, setLoadError] = useState(false);
+  const [fetching, setFetching] = useState(false);
 
-  // 진입(재방문 포함) 시 내 진행 중 거래 목록을 DB에서 조회해 표시
+  // 로그인 확인 후 내 거래 목록 조회 (새로고침 시 토큰 로드 대기)
   useEffect(() => {
+    //로그인 확인 끝날 때까지 기다려라
+    if (authLoading) return;
+
+    if (!user) {
+      setItems([]);
+      setLoadError(false);
+      setFetching(false);
+      return;
+    }
+
     let active = true;
+    //거래 목록 물러오는중 표시용
+    setFetching(true);
+    //이전에 에러였어도 새로 조회할 때 에러 상태 초기화
+    setLoadError(false);
+
     api
       .get<ApiResponse<TransactionResponse[]>>('/api/v1/transactions')
       .then((response) => {
@@ -68,6 +86,7 @@ export default function TransactionStatus({ title = '거래 상태' }: Transacti
             id: tx.id,
             type: tx.type,
             sellerId: tx.sellerId,
+            buyerId: tx.buyerId,
             meetingLocation: tx.meetingLocation ?? '',
             meetingTime: tx.meetingTime ? tx.meetingTime.replace('T', ' ') : '',
             completed: tx.status === 'COMPLETED',
@@ -76,11 +95,15 @@ export default function TransactionStatus({ title = '거래 상태' }: Transacti
       })
       .catch(() => {
         if (active) setLoadError(true);
+      })
+      .finally(() => {
+        if (active) setFetching(false);
       });
+
     return () => {
       active = false;
     };
-  }, []);
+  }, [authLoading, user?.id]);
 
   // 판매확정: 판매자가 거래 완료(COMPLETED)를 요청한다.
   const confirmSeller = async (id: number) => {
@@ -107,14 +130,30 @@ export default function TransactionStatus({ title = '거래 상태' }: Transacti
     setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const handleDelete = async (id: number) => {
+    if (!confirm('이 거래 내역을 삭제하시겠어요?')) {
+      return;
+    }
+    try {
+      await api.delete(`/api/v1/transactions/${id}`);
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch {
+      alert('거래 내역 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    }
+  };
+
   return (
     <div className={styles.container}>
       {title && <h1 className={styles.title}>{title}</h1>}
 
-      {loadError ? (
+      {authLoading || fetching ? (
+        <p className={styles.empty}>거래 정보를 불러오는 중...</p>
+      ) : !user ? (
+        <p className={styles.empty}>로그인 후 거래 내역을 확인할 수 있습니다.</p>
+      ) : loadError ? (
         <p className={styles.empty}>거래 정보를 불러오지 못했습니다.</p>
       ) : items.length === 0 ? (
-        <p className={styles.empty}>진행 중인 거래가 없습니다.</p>
+        <p className={styles.empty}>거래 내역이 없습니다.</p>
       ) : (
         <ul className={styles.list}>
           {items.map((item) => {
@@ -128,6 +167,20 @@ export default function TransactionStatus({ title = '거래 상태' }: Transacti
                 </div>
 
                 <div className={styles.info}>
+                  <div className={styles.meetingRow}>
+                    <span className={styles.meetingLabel}>판매자</span>
+                    <span className={styles.meetingValue}>
+                      {item.sellerId}
+                      {currentUserId === item.sellerId && ' (나)'}
+                    </span>
+                  </div>
+                  <div className={styles.meetingRow}>
+                    <span className={styles.meetingLabel}>구매자</span>
+                    <span className={styles.meetingValue}>
+                      {item.buyerId}
+                      {currentUserId === item.buyerId && ' (나)'}
+                    </span>
+                  </div>
                   <div className={styles.meetingRow}>
                     <span className={styles.meetingLabel}>장소</span>
                     <span className={styles.meetingValue}>{item.meetingLocation || '-'}</span>
@@ -158,6 +211,16 @@ export default function TransactionStatus({ title = '거래 상태' }: Transacti
                     onClick={() => handleCancel(item.id)}
                   >
                     거래 취소
+                  </button>
+                )}
+
+                {item.completed && (
+                  <button
+                    type="button"
+                    className={styles.deleteButton}
+                    onClick={() => handleDelete(item.id)}
+                  >
+                    내역 삭제
                   </button>
                 )}
               </li>

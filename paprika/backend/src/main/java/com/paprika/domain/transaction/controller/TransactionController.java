@@ -53,7 +53,7 @@ public class TransactionController {
         return ResponseEntity.ok(ApiResponse.ok(postQueryClient.getPostInfo(postId)));
     }
 
-    // 내(구매자) 진행 중 거래 목록 조회 (상태 페이지 재방문 시에도 표시)
+    // 내 거래 목록 조회 (진행 중 + 완료, 상태 페이지 재방문 시에도 표시)
     @GetMapping
     public ResponseEntity<ApiResponse<List<TransactionResponse>>> getMyTransactions(
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -98,6 +98,17 @@ public class TransactionController {
     public ResponseEntity<ApiResponse<Void>> completeTransaction(@PathVariable Long id) {
         transactionService.completeTransaction(id);
         return ResponseEntity.ok(ApiResponse.ok("거래가 완료되었습니다.", null));
+    }
+
+    // 거래 내역 삭제: 완료(COMPLETED) 건만 구매자/판매자가 삭제 가능
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteTransaction(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long id
+    ) {
+        Long userId = requireUserId(userDetails);
+        transactionService.deleteTransaction(id, userId);
+        return ResponseEntity.ok(ApiResponse.ok("거래 내역이 삭제되었습니다.", null));
     }
 
     // 로그인한 사용자(JWT) id 추출. 토큰이 없으면 401(인증 필요)
