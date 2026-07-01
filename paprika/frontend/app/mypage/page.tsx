@@ -3,9 +3,7 @@
  * 담당: E - 장인호
  *
  * TODO:
- *  - 매너 온도 시각화 (온도계 그래픽)
- *  - 관심 상품(찜) 목록
- *  - 받은 리뷰 목록
+ *  - 받은 리뷰 목록 미리보기
  *  - 로그아웃 버튼 (A - 민동현과 연동)
  */
 
@@ -14,20 +12,14 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { MyPageTransaction, WishListItem } from '@/types';
+import styles from './page.module.css';
+import MannerTemperature from '@/components/mypage/MannerTemperature';
+
+const WISHLIST_PREVIEW_COUNT = 5;
+const TRANSACTION_PREVIEW_COUNT = 5;
 
 type OrderTab = 'all' | 'buy' | 'sell' | 'selling';
-
-interface Transaction {
-  id: number;
-  postId: number;
-  type: string;
-  status: string;
-  myRole: string;
-  itemPrice: number;
-  amount: number;
-  createdAt: string;
-  imgUrl: string;
-}
 
 const orderTabs: { key: OrderTab; label: string }[] = [
   { key: 'all', label: '전체' },
@@ -55,7 +47,10 @@ export default function MyPage() {
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<MyPageTransaction[]>([]);
+  const [temperature, setTemperature] = useState(50);
+  const [trustGrade, setTrustGrade] = useState('보통');
+  const [wishlistItems, setWishlistItems] = useState<WishListItem[]>([]);
 
   useEffect(() => {
     api.get('/api/v1/users/me')
@@ -64,7 +59,13 @@ export default function MyPage() {
         setNickname(data.nickname ?? '');
         setEmail(data.email ?? '');
         setProfileImageUrl(data.profileImageUrl ?? null);
+        return api.get(`/api/v1/users/${data.id}/manner`);
       })
+      .then((res) => {
+        setTemperature(res.data.data.temperature);
+        setTrustGrade(res.data.data.trustGrade);
+      })
+      
       .catch(() => {});
   }, []);
 
@@ -74,48 +75,44 @@ export default function MyPage() {
       .catch(() => setTransactions([]));
   }, [activeOrderTab]);
 
+  useEffect(() => {
+    api.get('/api/v1/users/me/wishlist')
+      .then((res) => setWishlistItems(res.data.data))
+      .catch(() => setWishlistItems([]));
+  }, []);
+
   return (
-    <section style={{ display: 'grid', gap: 24 }}>
+    <section className={styles.pageGrid}>
 
       {/* 프로필 요약 */}
-      <div style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 24, padding: 24, boxShadow: 'var(--shadow-card)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <h1 style={{ marginBottom: 16 }}>내 프로필</h1>
-          <Link href="/mypage/profile" style={{ fontSize: 14, color: 'var(--color-secondary)', textDecoration: 'none' }}>회원정보 수정 &gt;</Link>
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h1 className={styles.sectionTitle}>내 프로필</h1>
+          <Link href="/mypage/profile" className={styles.editLink}>회원정보 수정 &gt;</Link>
         </div>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+        <div className={styles.profileInfo}>
           {profileImageUrl ? (
-            <img src={profileImageUrl} alt="프로필" style={{ width: 88, height: 88, borderRadius: 24, objectFit: 'cover' }} />
+            <img src={profileImageUrl} alt="프로필" className={styles.profileAvatar} />
           ) : (
-            <div style={{ width: 88, height: 88, borderRadius: 24, background: 'var(--color-surface)' }} />
+            <div className={styles.profileAvatarPlaceholder} />
           )}
           <div>
-            <p style={{ fontSize: 20, fontWeight: 700 }}>{nickname}</p>
-            <p style={{ color: 'var(--color-on-surface-variant)', marginTop: 4 }}>이메일: {email}</p>
-            <p style={{ color: 'var(--color-secondary)', marginTop: 8 }}>매너 온도 36.5°C</p>
+            <p className={styles.profileName}>{nickname}</p>
+            <p className={styles.profileEmail}>이메일: {email}</p>
+            <MannerTemperature score={temperature} />
           </div>
         </div>
       </div>
 
       {/* 거래 내역 */}
-      <div style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 24, padding: 24, boxShadow: 'var(--shadow-card)' }}>
-        <h2 style={{ marginBottom: 16 }}>거래 내역</h2>
-        <div style={{ display: 'flex', borderBottom: '1px solid #e0e0e0', marginBottom: 24 }}>
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>거래 내역</h2>
+        <div className={styles.tabs}>
           {orderTabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveOrderTab(tab.key)}
-              style={{
-                padding: '8px 20px',
-                background: 'none',
-                border: 'none',
-                borderBottom: activeOrderTab === tab.key ? '2px solid #222' : '2px solid transparent',
-                fontWeight: activeOrderTab === tab.key ? 700 : 400,
-                color: activeOrderTab === tab.key ? '#222' : '#888',
-                cursor: 'pointer',
-                fontSize: 14,
-                marginBottom: -1,
-              }}
+              className={`${styles.tab} ${activeOrderTab === tab.key ? styles.tabActive : ''}`}
             >
               {tab.label}
             </button>
@@ -123,21 +120,19 @@ export default function MyPage() {
         </div>
 
         {transactions.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--color-on-surface-variant)' }}>
-            {orderEmptyMessages[activeOrderTab]}
-          </div>
+          <div className={styles.emptySmall}>{orderEmptyMessages[activeOrderTab]}</div>
         ) : (
-          <div style={{ display: 'flex', gap: 12, overflowX: 'auto' }}>
-            {transactions.map((t) => (
-              <div key={t.id} style={{ display: 'flex', flexDirection: 'column', borderRadius: 12, background: 'var(--color-surface)', overflow: 'hidden', minWidth: 140, width: 140, flexShrink: 0 }}>
-                <img src={t.imgUrl} alt="상품" style={{ width: 140, height: 140, objectFit: 'cover' }} />
-                <div style={{ padding: '8px 10px' }}>
-                  <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>상품 #{t.postId}</p>
-                  <p style={{ fontSize: 12, color: 'var(--color-on-surface-variant)', marginBottom: 4 }}>
+          <div className={styles.transactionList}>
+            {transactions.slice(0, TRANSACTION_PREVIEW_COUNT).map((t) => (
+              <div key={t.id} className={styles.transactionCard}>
+                <img src={t.imgUrl} alt="상품" className={styles.transactionImg} />
+                <div className={styles.transactionInfo}>
+                  <p className={styles.transactionTitle}>상품 #{t.postId}</p>
+                  <p className={styles.transactionMeta}>
                     {t.type === 'DIRECT' ? '직거래' : '택배'} · {t.myRole === 'BUYER' ? '구매' : '판매'}
                   </p>
-                  <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>{t.amount.toLocaleString()}원</p>
-                  <p style={{ fontSize: 12, color: 'var(--color-secondary)' }}>{statusLabels[t.status]}</p>
+                  <p className={styles.transactionPrice}>{t.amount.toLocaleString()}원</p>
+                  <p className={styles.transactionStatus}>{statusLabels[t.status]}</p>
                 </div>
               </div>
             ))}
@@ -146,11 +141,23 @@ export default function MyPage() {
       </div>
 
       {/* 관심 상품 */}
-      <div style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 24, padding: 24, boxShadow: 'var(--shadow-card)' }}>
-        <h2 style={{ marginBottom: 16 }}>관심 상품</h2>
-        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--color-on-surface-variant)' }}>
-          찜한 상품이 없습니다.
-        </div>
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>관심 상품</h2>
+
+        {wishlistItems.length === 0 ? (
+          <div className={styles.emptySmall}>찜한 상품이 없습니다.</div>
+        ) : (
+          <div className={styles.transactionList}>
+            {wishlistItems.slice(0, WISHLIST_PREVIEW_COUNT).map((item) => (
+              <div key={item.id} className={styles.transactionCard}>
+                <img src={item.imgUrl} alt="상품" className={styles.transactionImg} />
+                <div className={styles.transactionInfo}>
+                  <p className={styles.transactionTitle}>상품 #{item.productId}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
     </section>

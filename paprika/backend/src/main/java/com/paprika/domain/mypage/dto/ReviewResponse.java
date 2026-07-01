@@ -17,20 +17,24 @@ public class ReviewResponse {
     private Long id;
     private Long transactionId;
     private Long reviewerId;
+    private String reviewerNickname;
     private Long revieweeId;
     private String content;
     private Integer mannerScore;
     private LocalDateTime createdAt;
+    private Integer rating;
 
-    public static ReviewResponse from(Review review) {
+    public static ReviewResponse from(Review review, String reviewerNickname) {
         return ReviewResponse.builder()
             .id(review.getId())
             .transactionId(review.getTransactionId())
             .reviewerId(review.getReviewerId())
+            .reviewerNickname(reviewerNickname)
             .revieweeId(review.getRevieweeId())
             .content(review.getContent())
             .mannerScore(review.getMannerScore())
             .createdAt(review.getCreatedAt())
+            .rating(review.getRating())
             .build();
     }
 }

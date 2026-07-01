@@ -1,0 +1,132 @@
+.title { margin-bottom: 24px; }
+
+.empty {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--color-on-surface-variant);
+}
+
+.list { display: grid; gap: 12px; }
+
+.card {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--color-surface-container-lowest);
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  box-shadow: var(--shadow-card);
+}
+
+.cardImg {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.cardInfo { flex: 1; }
+.cardTitle { font-weight: 600; margin-bottom: 4px; }
+.cardType { font-size: 13px; color: var(--color-on-surface-variant); }
+.cardRight { text-align: right; }
+.cardPrice { font-weight: 700; margin-bottom: 4px; }
+.cardStatus { font-size: 13px; color: var(--color-secondary); }
+
+.wishBtn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  cursor: pointer;
+  color: #e53935;
+  background: transparent;
+}
+
+/* 메인 페이지 전용 */
+.pageGrid { display: grid; gap: 24px; }
+
+.section {
+  background: var(--color-surface-container-lowest);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.sectionTitle { margin-bottom: 16px; }
+
+.editLink {
+  font-size: 14px;
+  color: var(--color-secondary);
+  text-decoration: none;
+}
+
+.profileInfo { display: flex; gap: 16px; align-items: center; }
+.profileAvatar { width: 88px; height: 88px; border-radius: 24px; object-fit: cover; }
+.profileAvatarPlaceholder { width: 88px; height: 88px; border-radius: 24px; background: var(--color-surface); }
+.profileName { font-size: 20px; font-weight: 700; }
+.profileEmail { color: var(--color-on-surface-variant); margin-top: 4px; }
+.profileTemperature { color: var(--color-secondary); margin-top: 8px; }
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 24px;
+}
+
+.tab {
+  padding: 8px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-weight: 400;
+  color: #888;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: -1px;
+}
+
+.tabActive { border-bottom: 2px solid #222; font-weight: 700; color: #222; }
+
+.emptySmall {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--color-on-surface-variant);
+}
+
+.transactionList { display: flex; gap: 12px; overflow-x: auto; }
+
+.transactionCard {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: var(--color-surface);
+  overflow: hidden;
+  min-width: 160px;
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.transactionImg { width: 160px; height: 160px; object-fit: cover; }
+.transactionInfo { padding: 8px 10px; }
+.transactionTitle { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+.transactionMeta { font-size: 12px; color: var(--color-on-surface-variant); margin-bottom: 4px; }
+.transactionPrice { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+.transactionStatus { font-size: 12px; color: var(--color-secondary); }
+
+/* 리뷰 전용 */
+.reviewCard {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-card);
+}
+
+.stars { color: #f5a623; font-size: 18px; margin-bottom: 8px; }
+.content { font-size: 14px; margin-bottom: 8px; line-height: 1.5; }
+.meta { font-size: 12px; color: var(--color-on-surface-variant); }

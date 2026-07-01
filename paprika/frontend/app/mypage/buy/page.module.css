@@ -1,0 +1,66 @@
+.reviewBtn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-secondary);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modalBox {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modalTitle { font-size: 18px; font-weight: 700; }
+
+.starRow { display: flex; gap: 8px; font-size: 28px; cursor: pointer; }
+.starFilled { color: #f5a623; }
+.starEmpty { color: #ddd; }
+
+.textarea {
+  width: 100%;
+  height: 80px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 14px;
+  resize: none;
+  box-sizing: border-box;
+}
+
+.modalBtns { display: flex; gap: 8px; justify-content: flex-end; }
+
+.submitBtn {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-secondary);
+  color: #fff;
+  cursor: pointer;
+}
+
+.cancelBtn {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: transparent;
+  cursor: pointer;
+}

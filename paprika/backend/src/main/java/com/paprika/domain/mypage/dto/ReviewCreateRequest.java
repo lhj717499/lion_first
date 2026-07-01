@@ -15,12 +15,9 @@ public class ReviewCreateRequest {
     @NotNull
     private Long transactionId;
 
-    @NotNull
-    private Long revieweeId;
-
     private String content;
 
     @NotNull
-    @Min(-1) @Max(1)
-    private Integer mannerScore; // -1(비매너), 0(보통), +1(매너)
+    @Min(1) @Max(5)
+    private Integer rating; // 1~5 (백엔드에서 mannerScore로 변환)
 }

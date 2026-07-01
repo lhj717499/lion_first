@@ -1,0 +1,135 @@
+.title {
+  margin-bottom: 24px;
+}
+
+.card {
+  background: var(--color-surface-container-lowest);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.cardInner {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.avatarWrap {
+  position: relative;
+  width: 88px;
+  height: 88px;
+}
+
+.avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 24px;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 88px;
+  height: 88px;
+  border-radius: 24px;
+  background: var(--color-surface);
+}
+
+.avatarEditBtn {
+  position: absolute;
+  bottom: -10px;
+  right: 0;
+  background: var(--color-secondary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 2px 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.nicknameRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.nicknameInput {
+  font-size: 18px;
+  font-weight: 700;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+
+.checkBtn {
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: none;
+  background: #555;
+  color: #fff;
+  font-size: 13px;
+}
+
+.saveBtn {
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-secondary);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 1;
+}
+
+.saveBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  background: transparent;
+}
+
+.nicknameMsg {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.nicknameMsgSuccess {
+  color: green;
+}
+
+.nicknameMsgError {
+  color: red;
+}
+
+.editBtn {
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  background: transparent;
+}
+
+.nicknameName {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.email {
+  color: var(--color-on-surface-variant);
+  margin-top: 4px;
+}
+
+.temperature {
+  color: var(--color-secondary);
+  margin-top: 8px;
+}
