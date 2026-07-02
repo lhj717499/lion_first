@@ -2,6 +2,9 @@ package com.paprika.global.config;
 
 import com.paprika.global.security.JwtAuthenticationFilter;
 import com.paprika.global.security.JwtProvider;
+import com.paprika.global.security.oauth2.CookieOAuth2AuthorizationRequestRepository;
+import com.paprika.global.security.oauth2.CustomOAuth2UserService;
+import com.paprika.global.security.oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +23,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final CookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
 
     // application-dev.yml: true / application-prod.yml: false
     @Value("${security.dev-mode:true}")
@@ -34,18 +40,22 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         if (devMode) {
-            // 개발 모드: 모든 API 허용 (JWT 필터도 동작하지만 인증 없이도 접근 가능)
             http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         } else {
-            // 운영 모드: JWT 인증 적용
             http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/**", "/ws/**").permitAll()
+                .requestMatchers("/api/v1/auth/**", "/ws/**", "/oauth2/**", "/login/oauth2/**").permitAll()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             );
         }
 
-        // JWT 필터는 dev/prod 모두 적용 (dev에서도 토큰이 있으면 SecurityContext에 유저 정보 세팅)
+        http.oauth2Login(oauth2 -> oauth2
+            .authorizationEndpoint(authorization -> authorization
+                .authorizationRequestRepository(cookieAuthorizationRequestRepository))
+            .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+            .successHandler(oAuth2SuccessHandler)
+        );
+
         http.addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
