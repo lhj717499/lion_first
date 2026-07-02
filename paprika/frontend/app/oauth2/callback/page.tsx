@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { setTokens } from '@/lib/auth';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function OAuth2CallbackPage() {
+function OAuth2CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refreshUser } = useAuth();
@@ -20,11 +20,25 @@ export default function OAuth2CallbackPage() {
     } else {
       router.replace('/login?error=oauth2');
     }
-  }, []);
+  }, [refreshUser, router, searchParams]);
 
   return (
     <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <p>로그인 처리 중...</p>
     </main>
+  );
+}
+
+export default function OAuth2CallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <p>로그인 처리 중...</p>
+        </main>
+      }
+    >
+      <OAuth2CallbackContent />
+    </Suspense>
   );
 }
