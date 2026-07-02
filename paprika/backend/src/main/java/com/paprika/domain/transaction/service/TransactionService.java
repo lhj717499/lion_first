@@ -8,6 +8,7 @@ import com.paprika.domain.transaction.dto.TransactionResponse;
 import com.paprika.domain.transaction.entity.DeliveryTransaction;
 import com.paprika.domain.transaction.entity.DirectTransaction;
 import com.paprika.domain.transaction.entity.Transaction;
+import com.paprika.domain.transaction.entity.Transaction.PaymentMethod;
 import com.paprika.domain.transaction.entity.Transaction.TransactionStatus;
 import com.paprika.domain.transaction.entity.Transaction.TransactionType;
 import com.paprika.domain.transaction.repository.DeliveryTransactionRepository;
@@ -19,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 /**
@@ -71,12 +74,28 @@ public class TransactionService {
         // 상품 조회로 판매자(작성자) 확보
         PostInfo postInfo = postQueryClient.getPostInfo(request.getPostId());
 
+        PaymentMethod paymentMethod = null;
+        BigDecimal fee = BigDecimal.ZERO;
+        if (request.getType() == TransactionType.DELIVERY) {
+            if (request.getPaymentMethod() == null) {
+                throw new IllegalArgumentException("택배 거래는 결제 수단(CASH/CARD) 선택이 필요합니다.");
+            }
+            paymentMethod = request.getPaymentMethod();
+            if (paymentMethod == PaymentMethod.CARD) {
+                fee = request.getItemPrice()
+                        .multiply(new BigDecimal("0.035"))
+                        .setScale(0, RoundingMode.HALF_UP);
+            }
+        }
+
         Transaction transaction = Transaction.builder()
                 .postId(request.getPostId())
                 .sellerId(postInfo.sellerId())
                 .buyerId(buyerId)
                 .type(request.getType())
                 .itemPrice(request.getItemPrice())
+                .paymentMethod(paymentMethod)
+                .fee(fee)
                 .build();
         transactionRepository.save(transaction);
 

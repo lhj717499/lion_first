@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import axios from 'axios';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ApiResponse, PostInfo } from '@/types';
@@ -16,13 +17,16 @@ interface TransactionSummary {
 }
 
 interface TransactionSetupProps {
-  /** URL 쿼리 대신 prop으로 postId를 넘길 때 사용 */
+  // 다른 화면(모달·상품 상세 등)에 끼워 넣을 때 제목을 끄거나 바꾸기 위한 옵션
+  title?: string | null;
+  // URL 쿼리 대신 prop으로 postId를 넘길 때 사용
   postId?: string | null;
-  /** 이미 진행 중인 거래가 있을 때 이동할 경로 */
+  // 이미 진행 중인 거래가 있을 때 이동할 경로
   statusRedirectPath?: string;
 }
 
 const IN_PROGRESS = new Set(['PENDING', 'AGREED']);
+const CARD_FEE_RATE = 0.035;
 
 /**
  * 거래 방식 선택 (재사용 모듈)
@@ -31,12 +35,9 @@ const IN_PROGRESS = new Set(['PENDING', 'AGREED']);
  * 상품 postId 기준으로 상품 정보를 보여주고 직거래/택배를 선택한다.
  * 같은 상품에 내 진행 중(PENDING/AGREED) 거래가 있으면 상태 페이지로 보낸다.
  *
- * 라우트(/transactions?postId=)뿐 아니라 <TransactionSetup postId="1" /> 로 끼워 쓸 수 있다.
+ * 라우트(/transactions?postId=)뿐 아니라 어디서든 <TransactionSetup postId="1" /> 로 끼워 쓸 수 있다.
  */
-export default function TransactionSetup({
-  postId: postIdProp,
-  statusRedirectPath = '/transactions/status/test',
-}: TransactionSetupProps) {
+export default function TransactionSetup({ title = '거래 방식 선택', postId: postIdProp, statusRedirectPath = '/transactions/status/test' }: TransactionSetupProps) {
   const searchParams = useSearchParams();
   const postId = postIdProp ?? searchParams.get('postId');
 
@@ -49,6 +50,7 @@ export default function TransactionSetup({
 
   const [payment, setPayment] = useState<PaymentMethod | null>(null);
   const [transactionType, setTransactionType] = useState<TransactionType | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // 진행 중 거래가 있으면 상태 페이지로 이동
   useEffect(() => {
@@ -108,22 +110,52 @@ export default function TransactionSetup({
   }, [postId]);
 
   const isDirect = transactionType === 'DIRECT';
+  const isDelivery = transactionType === 'DELIVERY';
+  const basePrice = postInfo?.price ?? 0;
+  const cardFee = payment === 'CARD' ? Math.round(basePrice * CARD_FEE_RATE) : 0;
+  const displayPrice = payment === 'CARD' ? basePrice + cardFee : basePrice;
+  const canComplete = isDirect || (isDelivery && payment !== null);
 
   const selectDirect = () => {
     setTransactionType('DIRECT');
     setPayment(null);
   };
 
-  const handleComplete = () => {
-    if (!isDirect || !postId) {
+  const handleComplete = async () => {
+    if (!postId || !postInfo) {
       return;
     }
-    const params = new URLSearchParams();
-    params.set('postId', postId);
-    if (postInfo) {
+
+    if (isDirect) {
+      const params = new URLSearchParams();
+      params.set('postId', postId);
       params.set('price', String(postInfo.price));
+      router.push(`/transactions/direct?${params.toString()}`);
+      return;
     }
-    router.push(`/transactions/direct?${params.toString()}`);
+
+    if (!isDelivery || !payment) {
+      return;
+    }
+    //지금 서버 저장중이라고 알려주는 것
+    setSubmitting(true);
+    try {
+      await api.post('/api/v1/transactions', {
+        postId: Number(postId),
+        type: 'DELIVERY',
+        itemPrice: postInfo.price,
+        paymentMethod: payment,
+      });
+      alert('택배 거래가 생성되었습니다.');
+      router.push(statusRedirectPath);
+    } catch (error) {
+      const message =
+        (axios.isAxiosError(error) && error.response?.data?.message) ||
+        '택배 거래 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+      alert(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!postId) {
@@ -140,13 +172,26 @@ export default function TransactionSetup({
 
   return (
     <div className={styles.container}>
+      {title && <h1 className={styles.title}>{title}</h1>}
       {postInfo && (
         <div className={styles.productSummary}>
           <div className={styles.productInfo}>
             <span className={styles.productTitle}>{postInfo.title}</span>
             <span className={styles.productSeller}>판매자 ID: {postInfo.sellerId}</span>
           </div>
-          <span className={styles.productPrice}>{postInfo.price.toLocaleString()}원</span>
+          <div className={styles.priceBlock}>
+            {payment === 'CARD' ? (
+              <>
+                <span className={styles.productPriceLabel}>최종 가격</span>
+                <span className={styles.productPrice}>{displayPrice.toLocaleString()}원</span>
+                <span className={styles.productPriceDetail}>
+                  상품 {basePrice.toLocaleString()}원 + 수수료 3.5% ({cardFee.toLocaleString()}원)
+                </span>
+              </>
+            ) : (
+              <span className={styles.productPrice}>{basePrice.toLocaleString()}원</span>
+            )}
+          </div>
         </div>
       )}
       {postError && <p className={styles.productError}>상품 정보를 불러오지 못했습니다.</p>}
@@ -190,10 +235,11 @@ export default function TransactionSetup({
       <button
         type="button"
         className={styles.completeButton}
-        disabled={!isDirect}
+        //아직 완료 준비가 안됬던가 API 저장 요청중이면 버튼 비활성화
+        disabled={!canComplete || submitting}
         onClick={handleComplete}
       >
-        완료
+        {submitting ? '저장 중...' : '완료'}
       </button>
     </div>
   );

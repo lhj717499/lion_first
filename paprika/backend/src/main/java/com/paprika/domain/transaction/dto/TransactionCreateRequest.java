@@ -1,5 +1,6 @@
 package com.paprika.domain.transaction.dto;
 
+import com.paprika.domain.transaction.entity.Transaction.PaymentMethod;
 import com.paprika.domain.transaction.entity.Transaction.TransactionType;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -24,6 +25,9 @@ public class TransactionCreateRequest {
 
     @NotNull
     private BigDecimal itemPrice; // 상품 가격
+
+    /** 택배(DELIVERY) 거래 시 필수: CASH 또는 CARD */
+    private PaymentMethod paymentMethod;
 
     // 직거래(DIRECT) 시 입력 (선택)
     private String meetingLocation;

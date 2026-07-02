@@ -30,6 +30,7 @@ public class TransactionResponse {
     private BigDecimal itemPrice;
     private BigDecimal fee;
     private BigDecimal amount;
+    private String paymentMethod;
     private String cancelledBy;
     private LocalDateTime createdAt;
 
@@ -55,6 +56,7 @@ public class TransactionResponse {
             .itemPrice(tx.getItemPrice())
             .fee(tx.getFee())
             .amount(tx.getAmount())
+            .paymentMethod(tx.getPaymentMethod() != null ? tx.getPaymentMethod().name() : null)
             .cancelledBy(tx.getCancelledBy() != null ? tx.getCancelledBy().name() : null)
             .createdAt(tx.getCreatedAt());
 

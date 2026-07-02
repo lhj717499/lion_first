@@ -60,6 +60,9 @@ public class Transaction {
     private BigDecimal amount; // 최종 결제 금액 (itemPrice + fee)
 
     @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod; // 택배(DELIVERY) 시 CASH/CARD, 직거래는 null
+
+    @Enumerated(EnumType.STRING)
     private CancelledBy cancelledBy; // SELLER, BUYER / 취소 아닐 때 null
 
     @CreatedDate
@@ -70,14 +73,16 @@ public class Transaction {
 
     @Builder
     private Transaction(Long postId, Long sellerId, Long buyerId,
-                        TransactionType type, BigDecimal itemPrice, BigDecimal fee) {
+                        TransactionType type, BigDecimal itemPrice,
+                        PaymentMethod paymentMethod, BigDecimal fee) {
         this.postId = postId;
         this.sellerId = sellerId;
         this.buyerId = buyerId;
         this.type = type;
         this.status = TransactionStatus.PENDING;
         this.itemPrice = itemPrice;
-        // 직거래(DIRECT)는 수수료 없음, 택배(DELIVERY)만 수수료 부과
+        this.paymentMethod = paymentMethod;
+        // 직거래(DIRECT)는 수수료 없음, 택배(DELIVERY)+카드만 3.5% 수수료
         this.fee = (type == TransactionType.DELIVERY && fee != null) ? fee : BigDecimal.ZERO;
         this.amount = itemPrice.add(this.fee);
     }
@@ -98,6 +103,8 @@ public class Transaction {
     }
 
     public enum TransactionType { DIRECT, DELIVERY }
+
+    public enum PaymentMethod { CASH, CARD }
 
     public enum TransactionStatus {
         PENDING,    // 거래 요청

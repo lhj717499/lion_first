@@ -1,24 +1,34 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import TransactionSetup from '@/components/transactions/TransactionSetup';
 import styles from './TradeButton.module.css';
 
+
 interface TradeButtonProps {
-  postId: number; // 게시글 id (백엔드 posts.id). ChatButton과 동일하게 number로 받는다
-  buttonClassName?: string;
+  postId?: number;
 }
 
-export default function TradeButton({ postId, buttonClassName }: TradeButtonProps) {
+export default function TradeButton({ postId: postIdProp }: TradeButtonProps) {
+  const pathname = usePathname();
+  const postId = useMemo(() => {
+    const fromUrl = pathname.match(/^\/products\/([^/]+)$/)?.[1];
+    if (fromUrl) {
+      return fromUrl;
+    }
+    return postIdProp != null ? String(postIdProp) : null;
+  }, [pathname, postIdProp]);
+
   const [open, setOpen] = useState(false);
 
   return (
-    <>
-      <button type="button" className={buttonClassName} onClick={() => setOpen(true)}>
+    <div className={styles.tradeButton}>
+      <button type="button" onClick={() => setOpen(true)}>
         거래하기
       </button>
 
-      {open && (
+      {open && postId && (
         <div className={styles.backdrop} onClick={() => setOpen(false)} role="presentation">
           <div
             className={styles.dialog}
@@ -31,11 +41,11 @@ export default function TradeButton({ postId, buttonClassName }: TradeButtonProp
               닫기
             </button>
             <Suspense fallback={<p className={styles.loading}>거래 정보를 불러오는 중...</p>}>
-              <TransactionSetup postId={String(postId)} />
+              <TransactionSetup postId={postId} title={null} />
             </Suspense>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
