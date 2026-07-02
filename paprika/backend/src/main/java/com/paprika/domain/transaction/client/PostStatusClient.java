@@ -12,8 +12,8 @@ public interface PostStatusClient {
     /** 거래 확정(AGREED) 시: 상품을 예약중(RESERVED)으로 변경 요청 */
     void markReserved(Long postId);
 
-    /** 거래 완료(COMPLETED) 시: 상품을 완료(COMPLETED)로 변경 요청 */
-    void markCompleted(Long postId);
+    /** 거래 완료(COMPLETED) 시: 상품을 판매완료(SOLD)로 변경 요청 */
+    void markSold(Long postId);
 
     /** 거래 취소(CANCELLED) 시: 상품을 판매중(SELLING)으로 복구 요청 */
     void markSelling(Long postId);
