@@ -30,7 +30,7 @@ import java.util.List;
  *
  * 거래 상태를 전이시키고, 그에 맞춰 상품(post) 상태 변경을 PostStatusClient로 "요청"한다.
  *  - 거래 확정(AGREED)   -> 상품 RESERVED(예약중), 같은 상품의 다른 PENDING 일괄 취소
- *  - 거래 완료(COMPLETED) -> 상품 COMPLETED(완료)
+ *  - 거래 완료(COMPLETED) -> 상품 SOLD(판매완료)
  *  - 거래 취소(CANCELLED) -> 상품 SELLING(판매중) 복구
  * (상품 상태를 실제로 바꾸는 부분은 post 담당 팀원이 PostStatusClient 구현에서 처리)
  *
@@ -170,18 +170,25 @@ public class TransactionService {
         postStatusClient.markReserved(postId);
     }
 
-    /** 거래 완료: 거래를 COMPLETED로, 상품을 COMPLETED(완료)로 변경 요청 */
+    /** 거래 완료: 거래를 COMPLETED로, 상품을 SOLD(판매완료)로 변경 요청 */
     @Transactional
     public void completeTransaction(Long transactionId) {
         Transaction transaction = findTransaction(transactionId);
         transaction.complete();
-        postStatusClient.markCompleted(transaction.getPostId());
+        postStatusClient.markSold(transaction.getPostId());
     }
 
-    /** 거래 취소: 거래를 CANCELLED로, 상품을 SELLING(판매중)으로 복구 요청 */
+    /** 거래 취소: 구매자/판매자만 가능, 진행 중(PENDING/AGREED) 건만 취소 */
     @Transactional
-    public void cancelTransaction(Long transactionId) {
+    public void cancelTransaction(Long transactionId, Long userId) {
         Transaction transaction = findTransaction(transactionId);
+        if (!transaction.getBuyerId().equals(userId) && !transaction.getSellerId().equals(userId)) {
+            throw new PaprikaException(ErrorCode.TRANSACTION_ACCESS_DENIED);
+        }
+        if (transaction.getStatus() != TransactionStatus.PENDING
+                && transaction.getStatus() != TransactionStatus.AGREED) {
+            throw new PaprikaException(ErrorCode.INVALID_TRANSACTION_STATUS);
+        }
         transaction.cancel();
         postStatusClient.markSelling(transaction.getPostId());
     }

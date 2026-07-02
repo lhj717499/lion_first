@@ -1,0 +1,16 @@
+.button {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--color-outline-variant);
+  font-size: 16px;
+  font-weight: 700;
+  background: var(--color-surface);
+  color: var(--color-error, #d92d20);
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -11,21 +11,15 @@ import styles from './TransactionSetup.module.css';
 type PaymentMethod = 'CASH' | 'CARD';
 type TransactionType = 'DIRECT' | 'DELIVERY';
 
-interface TransactionSummary {
-  postId: number;
-  status: string;
-}
-
 interface TransactionSetupProps {
   // 다른 화면(모달·상품 상세 등)에 끼워 넣을 때 제목을 끄거나 바꾸기 위한 옵션
   title?: string | null;
   // URL 쿼리 대신 prop으로 postId를 넘길 때 사용
   postId?: string | null;
-  // 이미 진행 중인 거래가 있을 때 이동할 경로
+  // 택배 거래 생성 완료 후 이동할 경로
   statusRedirectPath?: string;
 }
 
-const IN_PROGRESS = new Set(['PENDING', 'AGREED']);
 const CARD_FEE_RATE = 0.035;
 
 /**
@@ -33,11 +27,10 @@ const CARD_FEE_RATE = 0.035;
  * 담당: D - 이동준
  *
  * 상품 postId 기준으로 상품 정보를 보여주고 직거래/택배를 선택한다.
- * 같은 상품에 내 진행 중(PENDING/AGREED) 거래가 있으면 상태 페이지로 보낸다.
  *
  * 라우트(/transactions?postId=)뿐 아니라 어디서든 <TransactionSetup postId="1" /> 로 끼워 쓸 수 있다.
  */
-export default function TransactionSetup({ title = '거래 방식 선택', postId: postIdProp, statusRedirectPath = '/transactions/status/test' }: TransactionSetupProps) {
+export default function TransactionSetup({ title = '거래 방식 선택', postId: postIdProp, statusRedirectPath = '/mypage/buy' }: TransactionSetupProps) {
   const searchParams = useSearchParams();
   const postId = postIdProp ?? searchParams.get('postId');
 
@@ -46,43 +39,10 @@ export default function TransactionSetup({ title = '거래 방식 선택', postI
 
   const [postInfo, setPostInfo] = useState<PostInfo | null>(null);
   const [postError, setPostError] = useState(false);
-  const [checkingEntry, setCheckingEntry] = useState(false);
 
   const [payment, setPayment] = useState<PaymentMethod | null>(null);
   const [transactionType, setTransactionType] = useState<TransactionType | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // 진행 중 거래가 있으면 상태 페이지로 이동
-  useEffect(() => {
-    if (authLoading || !user || !postId) {
-      return;
-    }
-
-    let active = true;
-    setCheckingEntry(true);
-
-    api
-      .get<ApiResponse<TransactionSummary[]>>('/api/v1/transactions')
-      .then((response) => {
-        if (!active) return;
-        const mine = (response.data.data ?? []).find(
-          (tx) => tx.postId === Number(postId) && IN_PROGRESS.has(tx.status),
-        );
-        if (mine) {
-          router.replace(statusRedirectPath);
-        }
-      })
-      .catch(() => {
-        // 진입 검사 실패 시에도 새 거래 화면은 계속 표시
-      })
-      .finally(() => {
-        if (active) setCheckingEntry(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [authLoading, user, postId, router, statusRedirectPath]);
 
   // postId로 상품명·가격 조회
   useEffect(() => {
@@ -162,7 +122,7 @@ export default function TransactionSetup({ title = '거래 방식 선택', postI
     return <p className={styles.empty}>상품 정보가 없습니다. 상품 상세에서 거래하기를 눌러 주세요.</p>;
   }
 
-  if (authLoading || checkingEntry) {
+  if (authLoading) {
     return <p className={styles.empty}>거래 정보를 확인하는 중...</p>;
   }
 

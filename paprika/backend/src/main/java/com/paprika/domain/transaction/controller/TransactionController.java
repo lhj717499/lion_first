@@ -72,12 +72,16 @@ public class TransactionController {
     // (POST 테이블 실제 변경·홈페이지 표시는 POST 담당. 여기서는 변경을 "요청"만 한다)
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<Void>> updateStatus(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long id,
             @Valid @RequestBody TransactionStatusRequest request
     ) {
         switch (request.getStatus()) {
             case AGREED -> transactionService.agreeTransaction(id);
-            case CANCELLED -> transactionService.cancelTransaction(id);
+            case CANCELLED -> {
+                Long userId = requireUserId(userDetails);
+                transactionService.cancelTransaction(id, userId);
+            }
             default -> throw new IllegalArgumentException(
                     "지원하지 않는 상태 변경입니다. status=" + request.getStatus());
         }
@@ -93,7 +97,7 @@ public class TransactionController {
         return ResponseEntity.ok(ApiResponse.ok("운송장 번호가 등록되었습니다.", null));
     }
 
-    // 거래 최종 완료: 거래 COMPLETED -> 상품 완료(COMPLETED)로 변경 요청
+    // 거래 최종 완료: 거래 COMPLETED -> 상품 SOLD(판매완료)로 변경 요청
     @PostMapping("/{id}/complete")
     public ResponseEntity<ApiResponse<Void>> completeTransaction(@PathVariable Long id) {
         transactionService.completeTransaction(id);
