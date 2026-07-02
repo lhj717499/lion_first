@@ -92,8 +92,7 @@ export default async function ProductDetailPage({
 							관심 등록
 						</button>
 						<ChatButton postId={product.id} />
-						if(product.status === 'SELLING')
-						{<TradeButton postId={product.id} />}
+						{product.postStatus === 'SELLING' && <TradeButton postId={product.id} />}
 					</div>
 				</div>
 			</section>

@@ -5,10 +5,12 @@ import com.paprika.global.security.JwtProvider;
 import com.paprika.global.security.oauth2.CookieOAuth2AuthorizationRequestRepository;
 import com.paprika.global.security.oauth2.CustomOAuth2UserService;
 import com.paprika.global.security.oauth2.OAuth2SuccessHandler;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -44,9 +46,17 @@ public class SecurityConfig {
         } else {
             http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/**", "/ws/**", "/oauth2/**", "/login/oauth2/**").permitAll()
+                // 비로그인 사용자도 볼 수 있는 공개 조회 API (상품 목록/상세/검색)
+                .requestMatchers(HttpMethod.GET, "/api/v1/posts/**", "/api/v1/products/**").permitAll()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             );
+            // API 서버이므로 미인증 요청은 로그인 페이지 리다이렉트 대신 401 JSON 반환
+            http.exceptionHandling(handling -> handling.authenticationEntryPoint((request, response, ex) -> {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"success\":false,\"message\":\"로그인이 필요합니다.\",\"data\":null}");
+            }));
         }
 
         http.oauth2Login(oauth2 -> oauth2

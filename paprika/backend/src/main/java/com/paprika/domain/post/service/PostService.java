@@ -1,20 +1,24 @@
 package com.paprika.domain.post.service;
 
-import com.paprika.domain.post.dto.PostCreateRequest;
-import com.paprika.domain.post.dto.PostResponse;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.paprika.domain.post.dto.PostCreateRequest;
+import com.paprika.domain.post.dto.PostDetailResponse;
+import com.paprika.domain.post.dto.PostResponse;
 import com.paprika.domain.post.entity.Post;
 import com.paprika.domain.post.entity.Post.PostCategory;
 import com.paprika.domain.post.entity.Post.PostStatus;
+import com.paprika.domain.post.entity.PostImage;
 import com.paprika.domain.post.repository.PostImageRepository;
-import com.paprika.domain.post.repository.PostRepository;
 import com.paprika.domain.post.repository.PostPriceHistoryRepository;
+import com.paprika.domain.post.repository.PostRepository;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * 중고 상품 서비스
@@ -39,24 +43,21 @@ public class PostService implements IPostStatusUpdater {
     private final PostImageRepository postImageRepository;
     private final PostPriceHistoryRepository postPriceHistoryRepository;
 
-    // 전체 조회
-    public Page<PostResponse> getAllPosts(Pageable pageable) {
-        Page<Post> posts = postRepository.findAll(pageable);
-        return posts.map(PostResponse::from);
-    }
-
     // 단건 조회
-    public PostResponse getPostById(Long id) {
+    // (As-is - 07/02) 현재 쿼리 두 번 나가는 구조임
+    // (To-be) @Query 또는 @EntityGraph or fetch join로 한 번에 가져오도록 수정 필요
+    public PostDetailResponse getPostById(Long id) {
         Post post = postRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
-        return PostResponse.from(post);
+        List<PostImage> postImages = postImageRepository.findByPost_IdAndActiveTrue(id);
+        return PostDetailResponse.from(post, postImages);
     }
 
-    // 카테고리별 조회
-    public Page<PostResponse> getPostsByCategory(PostCategory category, Pageable pageable) {
+    // 전체 or 카테고리별 조회
+    public Page<PostResponse> getPostsByCategory(Pageable pageable, PostCategory category) {
         Page<Post> posts = (category != null)
                 ? postRepository.findByCategoryAndActiveTrue(category, pageable)
-                : postRepository.findAll(pageable);
+                : postRepository.findByActiveTrue(pageable);
         return posts.map(PostResponse::from);
     }
 
@@ -64,7 +65,7 @@ public class PostService implements IPostStatusUpdater {
     // 선택사항으로 두었을 때, 입력을 한다면 Post에서 builder는 어떻게 해야하는가
     // PostCreateRequest에서 category를 null로 두고, Post에서 category를 null로 두면 된다.
     @Transactional
-    public Long createdPost(Long userId, PostCreateRequest request) {
+    public Long createPost(Long userId, PostCreateRequest request) {
         Post post = Post.builder()
                 .userId(userId)
                 .title(request.title())
@@ -77,7 +78,67 @@ public class PostService implements IPostStatusUpdater {
                 // .category(request.category())
                 .build();
         postRepository.save(post);
+
+        if (request.imgUrls() != null) {
+            List<PostImage> postImages = request.imgUrls().stream()
+                    .map(imgUrl -> PostImage.builder()
+                            .post(post)
+                            .imgUrl(imgUrl)
+                            .build())
+                    .toList();
+            postImageRepository.saveAll(postImages);
+        }
+
         return post.getId();
+    }
+
+    // Post 수정
+    @Transactional
+    public Long updatePost(Long requesterId, Long postId, PostCreateRequest request) {
+        Post post = postRepository.findByIdAndActiveTrue(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + postId));
+        if (!post.getUserId().equals(requesterId)) {
+            throw new IllegalArgumentException("수정 권한이 없습니다.");
+        }
+
+        // Post update
+        post.updateContent(request.title(), request.content());
+        post.updatePrice(request.price());
+
+        // PostImage update
+        // 일단은 기존 이미지들을 soft delete 하고, 이미지를 다시 등록하는 방식으로 구현
+        // edited : 07/02
+        // TODO: 이미지 수정 로직 개선 필요 (예: 기존 이미지와 비교하여 변경된 부분만 업데이트)
+        List<PostImage> existingImages = postImageRepository.findByPost_IdAndActiveTrue(postId);
+        existingImages.forEach(PostImage::softDeleteSchedule);
+
+        if (request.imgUrls() != null) {
+            List<PostImage> newImages = request.imgUrls().stream()
+                    .map(imgUrl -> PostImage.builder()
+                            .post(post)
+                            .imgUrl(imgUrl)
+                            .build())
+                    .toList();
+            postImageRepository.saveAll(newImages);
+        }
+
+        return post.getId();
+    }
+
+    // Post 삭제 (soft delete)
+    // edited : 07/02
+    // 이것도 TODO: 이미지 수정 로직 개선
+    @Transactional
+    public void deletePost(Long requesterId, Long postId) {
+        Post post = postRepository.findByIdAndActiveTrue(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + postId));
+        if (!post.getUserId().equals(requesterId)) {
+            throw new IllegalArgumentException("삭제 권한이 없습니다.");
+        }
+        post.softDeletePost();
+
+        List<PostImage> existingImages = postImageRepository.findByPost_IdAndActiveTrue(postId);
+        existingImages.forEach(PostImage::softDeleteSchedule);
     }
 
     @Override

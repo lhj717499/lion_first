@@ -24,4 +24,5 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     Optional<Post> findByIdAndActiveTrue(Long id);
 
+    Page<Post> findByActiveTrue(Pageable pageable);
 }
