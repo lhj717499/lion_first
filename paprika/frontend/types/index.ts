@@ -50,9 +50,11 @@ export interface PostApiResponse {
   thumbnailUrl: string | null;
   currentPrice: number;
   active: boolean;
+  postStatus: 'SELLING' | 'RESERVED' | 'SOLD' | 'DRAFT';
   category: string | null;
   viewCount: number;
   createdAt: string;
+  imgUrls: string[];
 }
 
 // Chat (C - 한대천)
