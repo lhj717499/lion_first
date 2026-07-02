@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.paprika.domain.post.entity.Post;
 import com.paprika.domain.post.entity.Post.PostCategory;
+import com.paprika.domain.post.entity.Post.PostStatus;
 import com.paprika.domain.post.repository.PostImageRepository;
 import com.paprika.domain.post.repository.PostRepository;
 import com.paprika.domain.post.repository.PostPriceHistoryRepository;
@@ -33,7 +34,7 @@ import com.paprika.domain.post.repository.PostPriceHistoryRepository;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class PostService {
+public class PostService implements IPostStatusUpdater {
     private final PostRepository postRepository;
     private final PostImageRepository postImageRepository;
     private final PostPriceHistoryRepository postPriceHistoryRepository;
@@ -77,5 +78,31 @@ public class PostService {
                 .build();
         postRepository.save(post);
         return post.getId();
+    }
+
+    @Override
+    @Transactional
+    public void reservePost(Long postId) {
+        changeStatus(postId, PostStatus.RESERVED);
+    }
+
+    @Override
+    @Transactional
+    public void sellingPostAsCanceled(Long postId) {
+        changeStatus(postId, PostStatus.SELLING);
+
+    }
+
+    @Override
+    @Transactional
+    public void soldPost(Long postId) {
+        changeStatus(postId, PostStatus.SOLD);
+    }
+
+    private void changeStatus(Long postId, PostStatus newStatus) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + postId));
+        post.updateStatus(newStatus);
+
     }
 }

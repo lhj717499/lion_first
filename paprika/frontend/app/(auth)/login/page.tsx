@@ -7,6 +7,8 @@ import api from '@/lib/api';
 import { setTokens } from '@/lib/auth';
 import { useAuth } from '@/contexts/AuthContext';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
 export default function LoginPage() {
   const router = useRouter();
   const { refreshUser } = useAuth();
@@ -14,6 +16,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleSocialLogin = (provider: string) => {
+    window.location.href = `${API_URL}/oauth2/authorization/${provider}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +77,7 @@ export default function LoginPage() {
           <div style={{ display: 'grid', gap: 10 }}>
             <button
               type="button"
+              onClick={() => handleSocialLogin('naver')}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 16px', borderRadius: 16, border: 'none', background: '#03C75A', color: 'white', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(3, 199, 90, 0.18)' }}
             >
               <img src="/images/naver-logo.svg" alt="Naver" style={{ width: 18, height: 18 }} />
@@ -78,6 +85,7 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
+              onClick={() => handleSocialLogin('google')}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 16px', borderRadius: 16, border: '1px solid #D0D5DD', background: 'white', color: '#111827', fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)' }}
             >
               <img src="/images/google-logo.svg" alt="Google" style={{ width: 18, height: 18 }} />
@@ -85,6 +93,7 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
+              onClick={() => handleSocialLogin('github')}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 16px', borderRadius: 16, border: 'none', background: '#111827', color: 'white', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(17, 24, 39, 0.16)' }}
             >
               <img src="/images/github-logo.svg" alt="GitHub" style={{ width: 18, height: 18 }} />

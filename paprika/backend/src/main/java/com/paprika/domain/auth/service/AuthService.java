@@ -51,7 +51,11 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new PaprikaException(ErrorCode.USER_NOT_FOUND));
 
-        if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        if (user.getPassword() == null) {
+            throw new PaprikaException(ErrorCode.OAUTH2_ACCOUNT);
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new PaprikaException(ErrorCode.UNAUTHORIZED);
         }
 
